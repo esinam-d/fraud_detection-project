@@ -1,26 +1,28 @@
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+import pandas as pd # For data manipulation
+import numpy as np # For numerical operations
+from sklearn.model_selection import train_test_split # For splitting data into train/test sets
+from sklearn.preprocessing import LabelEncoder, StandardScaler # For encoding categorical variables and scaling features
+from sklearn.linear_model import LogisticRegression    # For the logistic regression model
+from sklearn.ensemble import RandomForestClassifier  # For the random forest model
+
+# For evaluation metrics and visualization
 from sklearn.metrics import (
     classification_report, confusion_matrix,
     roc_auc_score, roc_curve, ConfusionMatrixDisplay
 )
 from imblearn.over_sampling import SMOTE
-import matplotlib.pyplot as plt
-import warnings
+import matplotlib.pyplot as plt #To plot the results
+import warnings #This will ignore warnings from the libraries. Keeps the output clean.
 warnings.filterwarnings("ignore")
 
 # ─────────────────────────────────────────────
 #  1. Load data
 # ─────────────────────────────────────────────
 print("Loading data...")
-df = pd.read_csv("credcard_fraud.csv")
+df = pd.read_csv("credcard_fraud.csv") #Load the data into Data Frame (df).
 
 # ─────────────────────────────────────────────
-#  2. Feature engineering
+#  2. Preprocess data
 # ─────────────────────────────────────────────
 # Drop columns that leak identity or are non-informative
 DROP_COLS = ["trans_num", "first", "last", "street", "dob",
@@ -69,7 +71,7 @@ print(f"Resampled train size : {len(X_train_res):,}  "
 # ─────────────────────────────────────────────
 #  5. Scale features
 # ─────────────────────────────────────────────
-scaler = StandardScaler()
+scaler = StandardScaler() # Scale features for Logistic Regression 
 X_train_sc = scaler.fit_transform(X_train_res)
 X_test_sc  = scaler.transform(X_test)
 
@@ -77,13 +79,14 @@ X_test_sc  = scaler.transform(X_test)
 #  6. Train models
 # ─────────────────────────────────────────────
 models = {
-    "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
+    "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42), 
     "Random Forest":       RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1),
 }
 
 results = {}
 for name, model in models.items():
     print(f"\nTraining {name}...")
+
     # Random Forest doesn't need scaled data, LR does
     Xt = X_train_sc if name == "Logistic Regression" else X_train_res
     Xe = X_test_sc  if name == "Logistic Regression" else X_test
@@ -104,7 +107,7 @@ for name, model in models.items():
 fig, axes = plt.subplots(1, 3, figsize=(18, 5))
 fig.suptitle("Fraud Detection Model Evaluation", fontsize=14, fontweight="bold")
 
-# — Confusion matrices —
+# Confusion matrices
 for i, (name, res) in enumerate(results.items()):
     ax = axes[i]
     cm = confusion_matrix(y_test, res["y_pred"])
@@ -112,7 +115,7 @@ for i, (name, res) in enumerate(results.items()):
     disp.plot(ax=ax, colorbar=False, cmap="Blues")
     ax.set_title(f"{name}\n(ROC-AUC: {res['roc_auc']:.4f})")
 
-# — ROC curves —
+# ROC curves 
 ax = axes[2]
 for name, res in results.items():
     fpr, tpr, _ = roc_curve(y_test, res["y_proba"])
